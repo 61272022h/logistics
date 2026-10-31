@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食農大物流：在地鮮農直送校園</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap');
+        
+        body {
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            background-color: #f0fdf4;
+            user-select: none;
+        }
+
+        .road-line {
+            background-image: linear-gradient(to right, #cbd5e1 50%, transparent 50%);
+            background-size: 16px 100%;
+        }
+
+        @keyframes drive {
+            0% { left: 0%; transform: translateY(-50%) scale(0.8); }
+            50% { transform: translateY(-60%) scale(1.1); }
+            100% { left: 88%; transform: translateY(-50%) scale(1); }
+        }
+
+        .truck-animation {
+            animation: drive 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .slow-truck-animation {
+            animation: drive 3.2s ease-in-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-40px); }
+        }
+
+        .float-text {
+            animation: floatUp 1.2s ease-out forwards;
+        }
+
+        @keyframes cookPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15) rotate(5deg); }
+        }
+
+        .cook-effect {
+            animation: cookPulse 0.4s ease-in-out;
+        }
+
+        /* 挑蔬菜彈出與浮動動畫 */
+        @keyframes itemPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .item-pop {
+            animation: itemPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between select-none">
+
+    <!-- Top Scoreboard (Icons + Big Numbers) -->
+    <header class="bg-emerald-700 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            
+            <!-- Logo Icon -->
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-amber-400 text-emerald-900 rounded-2xl flex items-center justify-center text-2xl font-black shadow-md">
+                    🚚
+                </div>
+                <div class="hidden sm:block">
+                    <h1 class="text-lg font-black tracking-wide leading-tight">食農大物流</h1>
+                    <p class="text-[10px] text-emerald-200">在地小農 ⚡ 降本鮮採直送校園</p>
+                </div>
+            </div>
+
+            <!-- Visual Dashboard Stats -->
+            <div class="flex items-center gap-2 sm:gap-5 bg-emerald-800/80 px-3 py-2 rounded-2xl border border-emerald-600/50 text-xs sm:text-sm">
+                <!-- Stat 1: Student Happiness -->
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xl sm:text-2xl">😋</span>
+                    <div>
+                        <div class="text-[9px] text-emerald-200 font-bold">學生美味度</div>
+                        <div class="text-sm sm:text-base font-black text-amber-300" id="happy-score">50%</div>
+                    </div>
+                </div>
+
+                <div class="h-6 w-px bg-emerald-600"></div>
+
+                <!-- Stat 2: Waste Reduction -->
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xl sm:text-2xl">📉</span>
+                    <div>
+                        <div class="text-[9px] text-emerald-200 font-bold">廚餘剩食率</div>
+                        <div class="text-sm sm:text-base font-black text-rose-300" id="waste-score">45%</div>
+                    </div>
+                </div>
+
+                <div class="h-6 w-px bg-emerald-600"></div>
+
+                <!-- Stat 3: Savings Cash -->
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xl sm:text-2xl">💰</span>
+                    <div>
+                        <div class="text-[9px] text-emerald-200 font-bold">節省中間成本</div>
+                        <div class="text-sm sm:text-base font-black text-emerald-300">$<span id="savings-score">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Arcade Delivery Track Area -->
+    <main class="max-w-4xl mx-auto px-4 py-4 flex-grow w-full space-y-5">
+
+        <!-- Enlarged & Prominent Lunch Box & Eating Students Section -->
+        <div class="bg-gradient-to-b from-amber-50 to-orange-50 rounded-3xl p-5 border-4 border-amber-300 shadow-xl relative overflow-hidden">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                
+                <!-- Left: Big Interactive Lunch Tray -->
+                <div class="flex flex-col items-center sm:items-start gap-2 w-full md:w-auto">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🍱</span>
+                        <h2 class="text-xl font-black text-amber-900" id="meal-status-title">午餐菜單：傳統冷藏餐盤</h2>
+                        <span class="text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-full font-bold" id="meal-type-tag">盤商供應</span>
+                    </div>
+
+                    <!-- Enlarged Meal Dish Cards -->
+                    <div class="flex flex-wrap items-center justify-center gap-3 mt-2" id="meal-items-preview">
+                        <div class="bg-white border-2 border-amber-200 px-4 py-2.5 rounded-2xl shadow-sm text-center">
+                            <div class="text-3xl" id="food-veg-icon">🥬</div>
+                            <div class="text-xs font-bold text-slate-700 mt-1" id="food-veg-name">枯黃青菜</div>
+                        </div>
+                        <div class="bg-white border-2 border-amber-200 px-4 py-2.5 rounded-2xl shadow-sm text-center">
+                            <div class="text-3xl" id="food-meat-icon">🍖</div>
+                            <div class="text-xs font-bold text-slate-700 mt-1" id="food-meat-name">冷凍進口肉</div>
+                        </div>
+                        <div class="bg-white border-2 border-amber-200 px-4 py-2.5 rounded-2xl shadow-sm text-center">
+                            <div class="text-3xl">🍚</div>
+                            <div class="text-xs font-bold text-slate-700 mt-1">香Q白米飯</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Eating Students Visual Reaction -->
+                <div class="flex flex-col items-center justify-center bg-white/80 p-4 rounded-2xl border-2 border-amber-200 shadow-inner min-w-[200px]">
+                    <div class="text-xs font-bold text-amber-800 mb-1">🏫 學校餐廳用餐現場</div>
+                    <div class="flex items-center justify-center gap-3 my-1">
+                        <div class="text-4xl transition-transform hover:scale-125" id="student-avatar-1">👦🏻</div>
+                        <div class="text-5xl transition-transform hover:scale-125" id="student-avatar-main">🤢</div>
+                        <div class="text-4xl transition-transform hover:scale-125" id="student-avatar-2">👧🏽</div>
+                    </div>
+                    <div class="text-xs font-black text-rose-500 bg-rose-100 px-3 py-1 rounded-full mt-1" id="student-speech">
+                        「菜色普通，飯菜剩很多...」
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Guidance Banner -->
+        <div class="bg-emerald-700 text-white rounded-2xl p-3 flex items-center justify-between shadow-sm text-xs sm:text-sm">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">⚡</span>
+                <span class="font-bold">點選【🌱 在地小農】派車，挑戰「三章一 Q 限時認標章選好菜」！選越多，午餐越豐盛！</span>
+            </div>
+        </div>
+
+        <!-- Interactive Pick Vegetables Mini Game Overlay Container -->
+        <div id="veggie-picker-overlay" class="hidden bg-slate-900/80 backdrop-blur-sm rounded-3xl p-4 sm:p-6 border-4 border-amber-400 shadow-2xl relative overflow-hidden transition-all my-3">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-2 text-white">
+                    <span class="text-2xl">🏆</span>
+                    <div>
+                        <h3 class="font-black text-amber-300 text-sm sm:text-base">三章一 Q 鮮採選菜挑戰！</h3>
+                        <p class="text-[11px] text-emerald-200">點擊帶有【三章一 Q 標章】的優質食材，搶救校園午餐品質！</p>
+                    </div>
+                </div>
+                <div class="bg-emerald-800 text-amber-300 font-black px-3 py-1 rounded-xl text-xs sm:text-sm border border-emerald-500 flex items-center gap-1">
+                    <span>⏱️ 限時:</span>
+                    <span id="pick-timer" class="text-white text-base">5</span>s
+                </div>
+            </div>
+
+            <!-- Veggie Floating Area -->
+            <div id="veggie-items-container" class="bg-emerald-950/70 rounded-2xl h-40 border-2 border-emerald-500/50 relative overflow-hidden flex items-center justify-around px-2 sm:px-4">
+                <!-- Veggie/Item elements will be dynamically generated -->
+            </div>
+        </div>
+
+        <!-- 2 Simplified Express Delivery Lanes -->
+        <div class="space-y-4" id="delivery-lanes">
+
+            <!-- Lane 1: Veggie Farm -->
+            <div class="bg-white rounded-3xl p-4 border-2 border-slate-200 shadow-md flex items-center gap-3 relative overflow-hidden" id="lane-veg">
+                <!-- Source Buttons -->
+                <div class="flex flex-col gap-2 shrink-0 z-10">
+                    <button onclick="dispatchTruck('veg', 'local')" class="w-32 h-14 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 active:scale-95 text-white rounded-2xl flex flex-col items-center justify-center shadow-lg transition-all text-xs font-black">
+                        <span class="text-sm">🌱 在地有機菜</span>
+                        <span class="text-[10px] font-normal text-emerald-100">鮮採直送 ⚡ 降成本</span>
+                    </button>
+                    <button onclick="dispatchTruck('veg', 'wholesaler')" class="w-32 h-9 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl flex items-center justify-center text-[11px] font-bold border border-slate-300">
+                        <span>🏭 傳統大盤商</span>
+                    </button>
+                </div>
+
+                <!-- Road Track Area -->
+                <div class="flex-grow h-24 bg-slate-100 rounded-2xl border-2 border-slate-200 relative overflow-hidden flex items-center px-2">
+                    <div class="absolute inset-x-0 h-1 road-line top-1/2 -translate-y-1/2"></div>
+                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400 pointer-events-none">
+                        <span>🥬 蔬菜直供綠色通道</span>
+                    </div>
+                    <div id="track-veg" class="absolute inset-0 pointer-events-none"></div>
+                </div>
+
+                <!-- School Kitchen -->
+                <div class="w-20 sm:w-24 h-24 bg-amber-100 border-2 border-amber-300 rounded-2xl flex flex-col items-center justify-center text-center shrink-0 z-10 kitchen-box" id="kitchen-veg">
+                    <span class="text-3xl">🏫</span>
+                    <span class="text-xs font-bold text-amber-900 mt-1">學校廚房</span>
+                </div>
+            </div>
+
+            <!-- Lane 2: Meat Farm -->
+            <div class="bg-white rounded-3xl p-4 border-2 border-slate-200 shadow-md flex items-center gap-3 relative overflow-hidden" id="lane-meat">
+                <!-- Source Buttons -->
+                <div class="flex flex-col gap-2 shrink-0 z-10">
+                    <button onclick="dispatchTruck('meat', 'local')" class="w-32 h-14 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 active:scale-95 text-white rounded-2xl flex flex-col items-center justify-center shadow-lg transition-all text-xs font-black">
+                        <span class="text-sm">🌱 履歷鮮豬肉</span>
+                        <span class="text-[10px] font-normal text-rose-100">國產優質 ⚡ 跳過盤商</span>
+                    </button>
+                    <button onclick="dispatchTruck('meat', 'wholesaler')" class="w-32 h-9 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl flex items-center justify-center text-[11px] font-bold border border-slate-300">
+                        <span>🏭 冷凍進口盤商</span>
+                    </button>
+                </div>
+
+                <!-- Road Track Area -->
+                <div class="flex-grow h-24 bg-slate-100 rounded-2xl border-2 border-slate-200 relative overflow-hidden flex items-center px-2">
+                    <div class="absolute inset-x-0 h-1 road-line top-1/2 -translate-y-1/2"></div>
+                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400 pointer-events-none">
+                        <span>🥩 肉品直送專線</span>
+                    </div>
+                    <div id="track-meat" class="absolute inset-0 pointer-events-none"></div>
+                </div>
+
+                <!-- School Kitchen -->
+                <div class="w-20 sm:w-24 h-24 bg-amber-100 border-2 border-amber-300 rounded-2xl flex flex-col items-center justify-center text-center shrink-0 z-10 kitchen-box" id="kitchen-meat">
+                    <span class="text-3xl">🏫</span>
+                    <span class="text-xs font-bold text-amber-900 mt-1">學校廚房</span>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Floating Toast Effect Parent Container -->
+    <div id="effect-container" class="fixed inset-0 pointer-events-none z-50"></div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 text-xs py-3 text-center">
+        <p>🚚 食農大物流 ‧ 地產地消降低中間成本 ‧ 新鮮豐盛減少剩食</p>
+    </footer>
+
+    <script>
+        // Game Scores & Status
+        let happyScore = 50;
+        let wasteScore = 45;
+        let savingsScore = 0;
+
+        // Current Active Food Quality State (2 Categories)
+        const currentItemsState = {
+            veg: 'wholesaler',
+            meat: 'wholesaler'
+        };
+
+        // Veggie Picker Mini-Game Logic State
+        let isPickingActive = false;
+        let pickTimerId = null;
+
+        // Config Data
+        const laneConfig = {
+            veg: {
+                local: { name: '有機鮮翠花菜', icon: '🥦', happy: +20, waste: -15, save: 250 },
+                wholesaler: { name: '枯黃冷藏蔬菜', icon: '🥬', happy: -5, waste: +10, save: -50 }
+            },
+            meat: {
+                local: { name: '國產履歷香煎豬', icon: '🥩', happy: +25, waste: -20, save: 350 },
+                wholesaler: { name: '冷凍很久的乾肉', icon: '🍖', happy: -5, waste: +8, save: -80 }
+            }
+        };
+
+        // Dispatch Truck Function
+        function dispatchTruck(type, provider) {
+            if (isPickingActive) return; // Prevent double dispatch during mini game
+
+            const track = document.getElementById(`track-${type}`);
+            const isLocal = provider === 'local';
+            const config = laneConfig[type][provider];
+
+            // Trigger Veggie Picker Mini-Game when choosing Local Farmer
+            if (isLocal) {
+                startVeggiePickerGame(type, () => {
+                    executeTruckDrive(type, provider, config, track);
+                });
+            } else {
+                executeTruckDrive(type, provider, config, track);
+            }
+        }
+
+        // Execute Truck Driving Animation
+        function executeTruckDrive(type, provider, config, track) {
+            const isLocal = provider === 'local';
+            const truckEl = document.createElement('div');
+            const speedClass = isLocal ? 'truck-animation' : 'slow-truck-animation';
+            const borderStyle = isLocal ? 'border-emerald-500 bg-white' : 'border-slate-400 bg-slate-200';
+
+            truckEl.className = `absolute top-1/2 -translate-y-1/2 flex items-center gap-1 border-2 shadow-md px-2.5 py-1 rounded-full z-20 ${borderStyle} ${speedClass}`;
+            truckEl.innerHTML = `
+                <span class="text-xl">${isLocal ? '⚡🚚' : '🚛 💸'}</span>
+                <span class="text-xs font-bold">${config.icon}</span>
+            `;
+
+            track.appendChild(truckEl);
+
+            const travelTime = isLocal ? 1750 : 3100;
+
+            // Trigger Arrival Event when truck reaches school
+            setTimeout(() => {
+                truckEl.remove();
+                onDeliveryArrival(type, provider, config);
+            }, travelTime);
+        }
+
+        // Mini-Game: Pick Fresh Veggies & 3 Certifications 1 QR Code Challenge
+        function startVeggiePickerGame(type, onComplete) {
+            isPickingActive = true;
+            const overlay = document.getElementById('veggie-picker-overlay');
+            const container = document.getElementById('veggie-items-container');
+            const timerEl = document.getElementById('pick-timer');
+
+            overlay.classList.remove('hidden');
+            container.innerHTML = '';
+
+            let timeLeft = 5;
+            timerEl.innerText = timeLeft;
+
+            // 3 Certifications + 1 QR Items pool vs Bad items
+            const pool3C1Q = [
+                { icon: '🥦', tag: '有機', bg: 'bg-emerald-100 border-emerald-500 text-emerald-800' },
+                { icon: '🥬', tag: 'TAP履歷', bg: 'bg-teal-100 border-teal-500 text-teal-800' },
+                { icon: '🥩', tag: 'CAS優良', bg: 'bg-red-100 border-red-500 text-red-800' },
+                { icon: '🍎', tag: '溯源QR', bg: 'bg-amber-100 border-amber-500 text-amber-800' },
+                { icon: '🥚', tag: '友善雞蛋', bg: 'bg-orange-100 border-orange-500 text-orange-800' }
+            ];
+            
+            const poolBad = [
+                { icon: '🍂', tag: '爛葉', bg: 'bg-slate-200 border-slate-400 text-slate-600' },
+                { icon: '🥫', tag: '過期罐頭', bg: 'bg-slate-200 border-slate-400 text-slate-600' }
+            ];
+
+            // Spawn 5 Interactive Cards with Certifications
+            for (let i = 0; i < 5; i++) {
+                const isGood = Math.random() > 0.25; // 75% chance of 3C1Q item
+                const itemData = isGood 
+                    ? pool3C1Q[Math.floor(Math.random() * pool3C1Q.length)]
+                    : poolBad[Math.floor(Math.random() * poolBad.length)];
+
+                const itemBtn = document.createElement('button');
+                itemBtn.className = `flex flex-col items-center justify-center p-2 sm:p-3 rounded-2xl border-2 shadow-lg transition-transform active:scale-95 item-pop cursor-pointer ${itemData.bg}`;
+                itemBtn.innerHTML = `
+                    <span class="text-2xl sm:text-3xl pointer-events-none">${itemData.icon}</span>
+                    <span class="text-[10px] sm:text-xs font-black mt-1 pointer-events-none">${itemData.tag}</span>
+                `;
+
+                itemBtn.onclick = () => {
+                    if (isGood) {
+                        happyScore = Math.min(100, happyScore + 5);
+                        savingsScore += 100;
+                        itemBtn.className += ' ring-4 ring-amber-400 scale-110 pointer-events-none opacity-40';
+                        itemBtn.innerHTML = '<span class="text-2xl">✨認證!</span>';
+                        showFloatingToast('三章一Q加分！+😋', itemBtn, 'text-emerald-500');
+                    } else {
+                        happyScore = Math.max(10, happyScore - 3);
+                        itemBtn.className += ' ring-4 ring-rose-500 scale-90 pointer-events-none opacity-40';
+                        itemBtn.innerHTML = '<span class="text-2xl">❌劣質</span>';
+                        showFloatingToast('踩雷劣質菜！-❌', itemBtn, 'text-rose-500');
+                    }
+                    document.getElementById('happy-score').innerText = `${happyScore}%`;
+                    document.getElementById('savings-score').innerText = savingsScore.toLocaleString();
+                };
+
+                container.appendChild(itemBtn);
+            }
+
+            // Countdown Timer Logic
+            pickTimerId = setInterval(() => {
+                timeLeft--;
+                timerEl.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(pickTimerId);
+                    overlay.classList.add('hidden');
+                    isPickingActive = false;
+                    onComplete();
+                }
+            }, 850);
+        }
+
+        // Floating Toast for Veggie Picker Game
+        function showFloatingToast(msg, targetEl, textColor) {
+            const rect = targetEl.getBoundingClientRect();
+            const toast = document.createElement('div');
+            toast.className = `fixed font-black text-xs px-2.5 py-1 bg-white border border-slate-200 rounded-full shadow-lg z-50 float-text ${textColor}`;
+            toast.style.left = `${rect.left}px`;
+            toast.style.top = `${rect.top - 20}px`;
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 1000);
+        }
+
+        // Handle Arrival Rewards & Visual Updates
+        function onDeliveryArrival(type, provider, config) {
+            currentItemsState[type] = provider;
+
+            // Update Metrics
+            happyScore = Math.min(100, Math.max(10, happyScore + config.happy));
+            wasteScore = Math.min(80, Math.max(5, wasteScore + config.waste));
+            savingsScore += config.save;
+
+            document.getElementById('happy-score').innerText = `${happyScore}%`;
+            document.getElementById('waste-score').innerText = `${wasteScore}%`;
+            document.getElementById('savings-score').innerText = savingsScore.toLocaleString();
+
+            // Animate Kitchen Icon
+            const kitchenEl = document.getElementById(`kitchen-${type}`);
+            kitchenEl.classList.add('cook-effect');
+            setTimeout(() => kitchenEl.classList.remove('cook-effect'), 400);
+
+            // Update Meal Status Tray & Student Reaction Visuals
+            updateMealTrayVisuals();
+
+            // Trigger Pop-up Effect Text
+            showFloatingReward(type, config, provider === 'local');
+        }
+
+        // Dynamic Update Meal Tray & Student Reaction
+        function updateMealTrayVisuals() {
+            const foodVegIcon = document.getElementById('food-veg-icon');
+            const foodVegName = document.getElementById('food-veg-name');
+            const foodMeatIcon = document.getElementById('food-meat-icon');
+            const foodMeatName = document.getElementById('food-meat-name');
+            
+            const statusTitle = document.getElementById('meal-status-title');
+            const statusTag = document.getElementById('meal-type-tag');
+            
+            const studentAvatarMain = document.getElementById('student-avatar-main');
+            const studentSpeech = document.getElementById('student-speech');
+
+            // Check how many local items
+            const localCount = Object.values(currentItemsState).filter(val => val === 'local').length;
+
+            foodVegIcon.innerText = currentItemsState.veg === 'local' ? '🥦' : '🥬';
+            foodVegName.innerText = currentItemsState.veg === 'local' ? '有機翠綠蔬菜' : '枯黃冷藏蔬菜';
+
+            foodMeatIcon.innerText = currentItemsState.meat === 'local' ? '🥩' : '🍖';
+            foodMeatName.innerText = currentItemsState.meat === 'local' ? '國產履歷香煎豬' : '冷凍進口肉';
+
+            if (localCount === 2) {
+                statusTitle.innerText = '午餐菜單：🌟 三章一Q 完美在地直送大餐';
+                statusTag.className = 'text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold';
+                statusTag.innerText = '小農直供';
+                
+                studentAvatarMain.innerText = '😍';
+                studentSpeech.innerText = '「哇！今天的菜跟肉好新鮮美味！我全部吃光光了！」';
+                studentSpeech.className = 'text-xs font-black text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full mt-1';
+            } else if (localCount === 1) {
+                statusTitle.innerText = '午餐菜單：🥗 優質改善午餐';
+                statusTag.className = 'text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold';
+                statusTag.innerText = '部分在地';
+                
+                studentAvatarMain.innerText = '😋';
+                studentSpeech.innerText = '「午餐變好吃了，廚餘剩食大減少！」';
+                studentSpeech.className = 'text-xs font-black text-amber-600 bg-amber-100 px-3 py-1 rounded-full mt-1';
+            } else {
+                statusTitle.innerText = '午餐菜單：傳統冷藏餐盤';
+                statusTag.className = 'text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-full font-bold';
+                statusTag.innerText = '盤商供應';
+                
+                studentAvatarMain.innerText = '🤢';
+                studentSpeech.innerText = '「菜色普通，飯菜剩很多...」';
+                studentSpeech.className = 'text-xs font-black text-rose-500 bg-rose-100 px-3 py-1 rounded-full mt-1';
+            }
+        }
+
+        // Show Floating Text Effect
+        function showFloatingReward(type, config, isLocal) {
+            const lane = document.getElementById(`lane-${type}`);
+            const rect = lane.getBoundingClientRect();
+
+            const floatEl = document.createElement('div');
+            floatEl.className = `fixed font-black text-xs sm:text-sm flex items-center gap-1.5 bg-white border-2 px-3 py-1 rounded-2xl shadow-xl z-50 float-text ${isLocal ? 'border-emerald-400 text-emerald-700' : 'border-slate-300 text-slate-600'}`;
+            floatEl.style.left = `${rect.right - 180}px`;
+            floatEl.style.top = `${rect.top + 15}px`;
+            
+            floatEl.innerHTML = isLocal ? `
+                <span>😋 美味+${config.happy}%</span>
+                <span class="text-rose-600">📉 剩食${config.waste}%</span>
+                <span class="text-amber-600">💰 省$${config.save}</span>
+            ` : `
+                <span class="text-slate-500">菜色普通</span>
+                <span class="text-rose-500">💸 抽成增</span>
+            `;
+
+            document.getElementById('effect-container').appendChild(floatEl);
+
+            setTimeout(() => {
+                floatEl.remove();
+            }, 1200);
+        }
+    </script>
+</body>
+</html>
